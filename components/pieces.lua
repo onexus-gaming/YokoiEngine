@@ -23,38 +23,35 @@ local connectionRules = {
     [TOP_RIGHT] = {{0, -1, BOTTOM_RIGHT}, {1, -1, BOTTOM_LEFT}, {1, 0, TOP_LEFT}},
 }
 
-local function contains(t, val)
-    for i, v in ipairs(t) do
-        if v == val then return true end
-    end
-    return false
-end
-
 local function concat(t1, t2)
     for i, v in ipairs(t2) do
         table.insert(t1, v)
     end
 end
 
-local function connectedPieces(matrix, x, y, exx, exy)
+local function directlyConnectedPieces(matrix, x, y)
     local connected = {{x, y}}
 
     local piece = pieces[matrix.panels[y][x].piece]
 
+    if piece == nil then
+        return {}
+    end
+
     for i, v in ipairs(piece) do
-        print('cnr', v[1], v[2])
+        --print('cnr', v[1], v[2])
         for j, w in ipairs(connectionRules[v]) do
             local nx = x + w[1]
             local ny = y + w[2]
-            print('check', nx, ny, w[3][1], w[3][2])
+            --print('check', nx, ny, w[3][1], w[3][2])
             --print(x, y, w[1], w[2], nx, ny)
 
-            if (nx >= 1 and nx <= matrix.size[1]) and (ny >= 1 and ny <= matrix.size[2]) and not (nx == exx and ny == exy) then
+            if (nx >= 1 and nx <= matrix.size[1]) and (ny >= 1 and ny <= matrix.size[2]) then
                 local otherPiece = pieces[matrix.panels[ny][nx].piece]
-                print(otherPiece)
+                --print(otherPiece)
                 
                 if otherPiece ~= nil and contains(otherPiece, w[3]) then
-                    table.insert(connected, connectedPieces(matrix, nx, ny, x, y))
+                    table.insert(connected, {nx, ny})
                 end
             end
         end
@@ -65,5 +62,5 @@ end
 
 return {
     pieces = pieces,
-    connectedPieces = connectedPieces,
+    directlyConnectedPieces = directlyConnectedPieces,
 }

@@ -1,4 +1,29 @@
-novum = require "novum"
+SOUNDS = {
+    'move',
+    'dashUp',
+    'dashDown',
+    'dashLeft',
+    'dashRight',
+
+    'swap0',
+    'swap1',
+    'swap2',
+
+    'line0',
+    'line1',
+    'line2',
+
+    'clearLow',
+    'clearMid',
+    'clearHigh',
+    'clearVeryHigh',
+
+    'spawn',
+    'danger0',
+    'danger1',
+}
+
+novum = require 'novum'
 
 novum.title = "Yokoi Engine"
 
@@ -16,6 +41,61 @@ function deepCopy(t)
     return nt
 end
 
-novum:discoverAllScenes()
+function contains(t, val)
+    for i, v in ipairs(t) do
+        if v == val then return true end
+    end
+    return false
+end
 
-novum:switchSceneInstant 'test'
+function isBlockInSet(t, x, y)
+    for i, v in ipairs(t) do
+        if v[1] == x and v[2] == y then
+            return true
+        end
+    end
+    return false
+end
+
+GAME_SCALE = ((love.graphics.getWidth() + love.graphics.getHeight())/2)/700
+
+novum:discoverAllScenes()
+novum:hookCallback('draw', function(game)
+    GAME_SCALE = ((love.graphics.getWidth() + love.graphics.getHeight())/2)/700
+end)
+
+skins = {}
+
+-- load all skins
+function loadSkins()
+    local files = love.filesystem.getDirectoryItems('skins')
+
+    for i, v in ipairs(files) do
+        local info = love.filesystem.getInfo('skins/' .. v, 'directory')
+
+        if info then
+            skins[v] = require('skins.' .. v)
+            skins[v].initSounds = function(self)
+                self.sounds = {}
+                for j, w in ipairs(SOUNDS) do
+                    self.sounds[w] = love.audio.newSource('skins/' .. v .. '/sounds/' .. w .. '.ogg', 'static')
+                end
+            end
+            skins[v].stopSounds = function(self)
+                for k, v in pairs(self.sounds) do
+                    v:stop()
+                end
+            end
+            skins[v].clearSounds = function(self)
+                for k, v in pairs(self.sounds) do
+                    self.sounds[k] = nil
+                end
+            end
+        end
+    end
+end
+loadSkins()
+
+novum:switchSceneInstant('game', {
+    skin = 'default',
+})
