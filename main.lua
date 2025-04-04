@@ -48,6 +48,13 @@ function contains(t, val)
     return false
 end
 
+function find(t, val)
+    for i, v in ipairs(t) do
+        if v == val then return i end
+    end
+    return nil
+end
+
 function isBlockInSet(t, x, y)
     for i, v in ipairs(t) do
         if v[1] == x and v[2] == y then

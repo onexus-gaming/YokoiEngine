@@ -61,16 +61,72 @@ local function directlyConnectedPieces(matrix, x, y)
     return connected
 end
 
-local function walkPath(matrix, x, y, excludes)
-    --print(dump(excludes))
-    --print('WALK', x, y)
-    if not excludes then
-        excludes = {[x]={[y]=true}}
+local function piecesConnectedToCorner(matrix, x, y, corner)
+    local piece = pieces[matrix.panels[y][x].piece]
+
+    if piece == nil then
+        return {}
     end
 
-    local connected = directlyConnectedPieces(matrix, x, y)
+    local connected = {}
 
-    if x == 1 or x == matrix.size[1] or matrix.panels[y][x].active then
+    for i, v in ipairs(connectionRules[piece[corner]]) do
+        local nx = x + v[1]
+        local ny = y + v[2]
+
+        if (nx >= 1 and nx <= matrix.size[1]) and (ny >= 1 and ny <= matrix.size[2]) then
+            local otherPiece = pieces[matrix.panels[ny][nx].piece]
+            --print(otherPiece)
+
+            if otherPiece ~= nil then
+                local found = find(otherPiece, v[3])
+                if found then
+                    table.insert(connected, {nx, ny, found})
+                end
+            end
+        end
+    end
+
+    return connected
+end
+
+local function walkPath(matrix, x, y, corner, excludes)
+    print('WALK', x, y, corner)
+    if not excludes then
+        excludes = {[x]={[y]=true}}
+    elseif not excludes[x] then
+        excludes[x] = {[y]=true}
+    elseif excludes[x][y] then
+        return matrix.panels[y][x].active
+    end
+    --print('EXCLUDES', dump(excludes))
+    
+    if matrix.panels[y] == nil then return end
+    local piece = pieces[matrix.panels[y][x].piece]
+    if piece == nil then return end
+    local pieceCorner = piece[corner]
+    local movedX = x + pieceCorner[1]
+    
+
+    --print('MOVED', movedX)
+
+    if movedX == 0 or movedX > matrix.size[1] then
+        matrix.panels[y][x].active = true
+        return matrix.panels[y][x].active
+    else
+        local connected = piecesConnectedToCorner(matrix, x, y, corner)
+        --print('CONNECTED', dump(connected))
+
+        for i, v in ipairs(connected) do
+            --print('CONNECTED', i, dump(v))
+            matrix.panels[y][x].active = walkPath(matrix, v[1], v[2], 2-v[3]+1, excludes)
+            --print('ACTIVE', x, y, matrix.panels[y][x].active)
+        end
+
+        return false
+    end
+
+    --[=[ if x == 1 or x == matrix.size[1] or matrix.panels[y][x].active then
         if not matrix.panels[y][x].active then
             matrix.panels[y][x].active = true
             matrix.panels[y][x].activePiece = matrix.panels[y][x].piece
@@ -91,11 +147,12 @@ local function walkPath(matrix, x, y, excludes)
         end
 
         return false
-    end
+    end ]=]
 end
 
 return {
     pieces = pieces,
     directlyConnectedPieces = directlyConnectedPieces,
+    piecesConnectedToCorner = piecesConnectedToCorner,
     walkPath = walkPath,
 }

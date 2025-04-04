@@ -120,8 +120,8 @@ local Game = {
             self.cursor.position[2] = self.matrix.size[2] - 1
         end
 
-        local connected1 = pieces.directlyConnectedPieces(self.matrix, unpack(self.cursor.position))
-        local connected2 = pieces.directlyConnectedPieces(self.matrix, self.cursor.position[1], self.cursor.position[2]+1)
+        local connected1 = pieces.piecesConnectedToCorner(self.matrix, self.cursor.position[1], self.cursor.position[2], 1)
+        local connected2 = pieces.piecesConnectedToCorner(self.matrix, self.cursor.position[1], self.cursor.position[2]+1, 1)
 
         print('MOTION')
         print('--')
@@ -155,8 +155,8 @@ local Game = {
             self:playSound 'swap1'
         end
 
-        pieces.walkPath(self.matrix, x, y)
-        pieces.walkPath(self.matrix, x, y+1)
+        --[[ pieces.walkPath(self.matrix, x, y)
+        pieces.walkPath(self.matrix, x, y+1) ]]
     end,
 
     playSound = function(self, soundID)
@@ -235,9 +235,9 @@ local Game = {
         end
 
         -- active panels
-        --[[ for i = 1, self.matrix.size[2] do
-            pieces.walkPath(self.matrix, 1, i)
-        end ]]
+        for i = 1, self.matrix.size[2] do
+            pieces.walkPath(self.matrix, 1, i, 2)
+        end
     end,
 
     draw = function(self, game)
