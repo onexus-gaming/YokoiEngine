@@ -23,20 +23,21 @@ local connectionRules = {
     [TOP_RIGHT] = {{0, -1, BOTTOM_RIGHT}, {1, -1, BOTTOM_LEFT}, {1, 0, TOP_LEFT}},
 }
 
-local function concat(t1, t2)
+--[[ local function concat(t1, t2)
     for i, v in ipairs(t2) do
         table.insert(t1, v)
     end
-end
+end ]]
 
 local function directlyConnectedPieces(matrix, x, y)
-    local connected = {{x, y}}
-
+    --print('dcp', matrix, x, y)
     local piece = pieces[matrix.panels[y][x].piece]
 
     if piece == nil then
         return {}
     end
+
+    local connected = {{x, y}}
 
     for i, v in ipairs(piece) do
         --print('cnr', v[1], v[2])
@@ -49,7 +50,7 @@ local function directlyConnectedPieces(matrix, x, y)
             if (nx >= 1 and nx <= matrix.size[1]) and (ny >= 1 and ny <= matrix.size[2]) then
                 local otherPiece = pieces[matrix.panels[ny][nx].piece]
                 --print(otherPiece)
-                
+
                 if otherPiece ~= nil and contains(otherPiece, w[3]) then
                     table.insert(connected, {nx, ny})
                 end
@@ -60,7 +61,41 @@ local function directlyConnectedPieces(matrix, x, y)
     return connected
 end
 
+local function walkPath(matrix, x, y, excludes)
+    --print(dump(excludes))
+    --print('WALK', x, y)
+    if not excludes then
+        excludes = {[x]={[y]=true}}
+    end
+
+    local connected = directlyConnectedPieces(matrix, x, y)
+
+    if x == 1 or x == matrix.size[1] or matrix.panels[y][x].active then
+        if not matrix.panels[y][x].active then
+            matrix.panels[y][x].active = true
+            matrix.panels[y][x].activePiece = matrix.panels[y][x].piece
+        end
+        return matrix.panels[y][x].active
+    else
+        if not excludes[x] then
+            excludes[x] = {}
+        end
+        excludes[x][y] = true
+
+        for i, piece in ipairs(connected) do
+            if not excludes or not excludes[piece[1]] or not excludes[piece[1]][piece[2]] then
+                matrix.panels[y][x].active = walkPath(matrix, piece[1], piece[2], excludes)
+            else
+                matrix.panels[y][x].active = matrix.panels[piece[2]][piece[1]].active
+            end
+        end
+
+        return false
+    end
+end
+
 return {
     pieces = pieces,
     directlyConnectedPieces = directlyConnectedPieces,
+    walkPath = walkPath,
 }

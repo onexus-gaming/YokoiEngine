@@ -7,7 +7,11 @@ local NOPIECE = {
     visualOffsets = {0, 0},
     updateTime = 0,
     spawnTime = 0,
+
     hidden = false,
+
+    active = false,
+    activePiece = 0,
 }
 
 local function lineCap(x1, y1, x2, y2)
@@ -31,19 +35,6 @@ local function rtprint(t)
     end
     io.write(' }') ]]
     print(dump(t))
-end
-
-function dump(o)
-    if type(o) == 'table' then
-        local s = '{ '
-        for k,v in pairs(o) do
-            if type(k) ~= 'number' then k = '"'..k..'"' end
-            s = s .. '['..k..'] = ' .. dump(v) .. ','
-        end
-        return s .. '} '
-    else
-        return tostring(o)
-    end
 end
 
 local Game = {
@@ -163,6 +154,9 @@ local Game = {
         else
             self:playSound 'swap1'
         end
+
+        pieces.walkPath(self.matrix, x, y)
+        pieces.walkPath(self.matrix, x, y+1)
     end,
 
     playSound = function(self, soundID)
@@ -239,6 +233,11 @@ local Game = {
         if math.abs(self.cursor.position[2] - self.cursor.visualPosition[2]) <= 0.02 then
             self.cursor.visualPosition[2] = self.cursor.position[2]
         end
+
+        -- active panels
+        --[[ for i = 1, self.matrix.size[2] do
+            pieces.walkPath(self.matrix, 1, i)
+        end ]]
     end,
 
     draw = function(self, game)
@@ -253,9 +252,6 @@ local Game = {
         love.graphics.print(GAME_SCALE .. ' ' .. 40*GAME_SCALE .. ' ' .. 30*GAME_SCALE, 0, 0)
 
         -- panels
-        -- pieces connected to both cursor panels
-        local connected1 = pieces.directlyConnectedPieces(self.matrix, unpack(self.cursor.position))
-        local connected2 = pieces.directlyConnectedPieces(self.matrix, self.cursor.position[1], self.cursor.position[2]+1)
 
         --[[ print('--')
         rtprint(connected1)
@@ -272,7 +268,7 @@ local Game = {
 
                 if panel.piece > 0 then
                     love.graphics.setLineWidth(3*GAME_SCALE)
-                    if isBlockInSet(connected1, x, y) or isBlockInSet(connected2, x, y) then
+                    if panel.active then
                         love.graphics.setColor(unpack(self.colors.line))
                     else
                         love.graphics.setColor(unpack(self.colors.piece))
