@@ -103,6 +103,14 @@ local Game = {
         return line
     end,
 
+    resetActiveState = function(self)
+        for y = 1, self.matrix.size[2] do
+            for x = 1, self.matrix.size[1] do
+                self.matrix.panels[y][x].active = false
+            end
+        end
+    end,
+
     moveCursor = function(self, dx, dy)
         self.cursor.position[1] = self.cursor.position[1] + dx
         if self.cursor.position[1] < 1 then
@@ -157,6 +165,11 @@ local Game = {
 
         --[[ pieces.walkPath(self.matrix, x, y)
         pieces.walkPath(self.matrix, x, y+1) ]]
+        self:resetActiveState()
+        for i = 1, self.matrix.size[2] do
+            print("TESTING", 1, i)
+            pieces.walkPath(self.matrix, 1, i, 2)
+        end
     end,
 
     playSound = function(self, soundID)
@@ -235,9 +248,9 @@ local Game = {
         end
 
         -- active panels
-        for i = 1, self.matrix.size[2] do
+        --[[ for i = 1, self.matrix.size[2] do
             pieces.walkPath(self.matrix, 1, i, 2)
-        end
+        end ]]
     end,
 
     draw = function(self, game)
